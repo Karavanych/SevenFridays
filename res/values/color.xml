@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="WHITE">#FFFFFFFF</color>
+    <color name="BASEFON">#2e014f</color>
+    <color name="ITEM_TEXT">#000000</color>
+    <color name="BACKGROUND_MAIN">#FFFFFFFF</color>    
+        
+</resources>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Семь7Пятниц</string>
+    <string name="desc">no image</string>
+    <string name="title_section1">Section 1</string>
+    <string name="title_section2">Section 2</string>
+    <string name="title_section3">Section 3</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="action_example">Синхронизировать</string>
+    <string name="action_settings">Настройки</string>
+    
+    
+    <string name="siteSevenFrides">http://37.98.243.100:88</string>
+    <string name="siteSevenFridesAlhoTable">/1394/</string>
+
+</resources>

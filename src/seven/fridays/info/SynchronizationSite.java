@@ -32,7 +32,7 @@ public class SynchronizationSite {
 	//Диалог ожидания
 	 //private ProgressDialog pd;
 	 protected WakeLock wakeLock;
-	 static protected boolean TEST_LOAD=true;
+	 static protected boolean TEST_LOAD=false;
 	 
 	// 86400000 - 1 день в мс, 172800000 - 2 дня 	
 	 public static long UPDATE_SYNCHRONIZATION_TIME=172800000l;

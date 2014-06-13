@@ -308,8 +308,7 @@ public class MainActivity extends ActionBarActivity implements
 	@Override
 	protected void onDestroy() {
 		
-		super.onDestroy();
-		DB_HELPER.close();
+		super.onDestroy();	
 		
 		unregisterReceiver(br);
 	}

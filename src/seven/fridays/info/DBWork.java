@@ -155,7 +155,7 @@ public class DBWork {
 	}
 	
 	public static String[] getCategoryList() {
-		SQLiteDatabase db = MainActivity.DB_HELPER.getWritableDatabase();
+		SQLiteDatabase db = MainActivity.DB_HELPER.getReadableDatabase();
 		Cursor qr = db.query("category", new String[] { "name", "url" }, null,
 				null, null, null, null);
 
@@ -180,7 +180,7 @@ public class DBWork {
 	
 	
 	public static String[] getCountryList() {
-		SQLiteDatabase db = MainActivity.DB_HELPER.getWritableDatabase();
+		SQLiteDatabase db = MainActivity.DB_HELPER.getReadableDatabase();
 		
 		String uslovie=null;
 		String[] uslovieargs=null;

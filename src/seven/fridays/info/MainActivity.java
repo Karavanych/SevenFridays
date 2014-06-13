@@ -4,11 +4,12 @@ package seven.fridays.info;
 import java.util.concurrent.TimeUnit;
 
 import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
@@ -54,7 +55,7 @@ public class MainActivity extends ActionBarActivity implements
 	static ListView lvData;
 	static ContentValues loaderParams;	
 	public boolean isRun=false;
-	long lastUpdate; 
+	//long lastUpdate; 
 	
 	MyReceiver br;
 	public final static String BROADCAST_ACTION = "sevenfridays.serviceresiver";
@@ -119,7 +120,16 @@ public class MainActivity extends ActionBarActivity implements
 	    // регистрируем (включаем) BroadcastReceiver
 	    registerReceiver(br, intFilt);
 	    
-	    readSPref();
+	    //readSPref();
+	    
+	    
+	    // задем расписание для обновления
+	    AlarmManager am=(AlarmManager)this.getSystemService(Context.ALARM_SERVICE);
+	    Intent intent = new Intent(this, AlarmReceiver.class);
+	    PendingIntent pi = PendingIntent.getBroadcast(this, 0, intent, 0);
+	    //After after 3 seconds
+	    am.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis()+ 1000 * 3,SynchronizationSite.CHECK_SYNCHRONIZATION_TIME , pi);
+	    
 	}
 	
 	@Override
@@ -127,7 +137,6 @@ public class MainActivity extends ActionBarActivity implements
 		
 		super.onStart();
 	
-
 	    // добавляем контекстное меню к списку
 	    registerForContextMenu(lvData);
 	    
@@ -136,7 +145,7 @@ public class MainActivity extends ActionBarActivity implements
 	    getSupportLoaderManager().getLoader(0).forceLoad();
 	    isRun=true;
 	    
-	   verifeUpdate();
+	   //verifeUpdate();
 	}
 	
 
@@ -350,22 +359,23 @@ public class MainActivity extends ActionBarActivity implements
 		getSupportLoaderManager().getLoader(0).forceLoad();		
 	}		
 	
-	
-	protected void readSPref() {
+	//проверку обновлений сделали через AlarmReceiver
+	/*protected void readSPref() {
 	    //Context con;
       //  try {
             SharedPreferences pref = getSharedPreferences(getString(R.string.app_name), Context.MODE_PRIVATE);
             lastUpdate=pref.getLong("lastUpdate", 0);
             Log.d("MyLogs", Long.toString(lastUpdate));
-	}
+	}*/
 	
 	
-	private void verifeUpdate() {
+	//проверку обновлений сделали через AlarmReceiver
+	/*private void verifeUpdate() {
 		// TODO Auto-generated method stub
 		
 		readSPref();
-		// 86400000 - 1 день в мс, 172800000 - 2 дня 		
-		if (Math.abs(System.currentTimeMillis()-lastUpdate)>172800000l) { // need update
+			
+		if (Math.abs(System.currentTimeMillis()-lastUpdate)>SynchronizationSite.UPDATE_SYNCHRONIZATION_TIME) { // need update
 			if (isDeviceOnline()) {
 				Toast.makeText(this, "Автоматически запущено обновление данных.", Toast.LENGTH_LONG).show();				
 				startService(new Intent(this, MyDBUpdateService.class));
@@ -375,7 +385,7 @@ public class MainActivity extends ActionBarActivity implements
 			
 		}
 		
-	}
+	}*/
 	
 	
     /** Checks whether the device currently has a network connection */

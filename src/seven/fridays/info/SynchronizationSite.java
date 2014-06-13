@@ -16,8 +16,6 @@ import org.apache.http.util.EntityUtils;
 import org.htmlcleaner.TagNode;
 
 import android.app.Activity;
-import android.app.ProgressDialog;
-import android.app.Service;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
@@ -35,6 +33,11 @@ public class SynchronizationSite {
 	 //private ProgressDialog pd;
 	 protected WakeLock wakeLock;
 	 static protected boolean TEST_LOAD=true;
+	 
+	// 86400000 - 1 день в мс, 172800000 - 2 дня 	
+	 public static long UPDATE_SYNCHRONIZATION_TIME=172800000l;
+	 public static long CHECK_SYNCHRONIZATION_TIME=3600000l; // 1 час
+	 
 	 static String NO_IMAGE_URL="http://37.98.243.100:88/img/no-image-big.png";
 	
 	public SynchronizationSite(Activity cc) {

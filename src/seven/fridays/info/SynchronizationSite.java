@@ -17,34 +17,47 @@ import org.htmlcleaner.TagNode;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.app.Service;
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
-import android.util.Log;
+import android.widget.Toast;
 
 
 public class SynchronizationSite {
 	Activity mActivity;
+	MyDBUpdateService mService;
 	//Диалог ожидания
-	 private ProgressDialog pd;
+	 //private ProgressDialog pd;
 	 protected WakeLock wakeLock;
-	 static protected boolean TEST_LOAD=false;
+	 static protected boolean TEST_LOAD=true;
 	 static String NO_IMAGE_URL="http://37.98.243.100:88/img/no-image-big.png";
 	
 	public SynchronizationSite(Activity cc) {
-		mActivity=cc;			
+		mActivity=cc;
+		mService=null;
 	}
 	
+	public SynchronizationSite(MyDBUpdateService myDBUpdateService) {
+		// TODO Auto-generated constructor stub
+		mActivity=null;
+		mService=myDBUpdateService;
+	}
+
 	@SuppressWarnings("deprecation")
 	public void doParseSite(String[] strings) {
-		pd = ProgressDialog.show(mActivity, "Working...", "request to server", true, false);		
-		//запрещаем засыпать во время синхронизации		    	
-	    PowerManager pm = (PowerManager) pd.getContext().getSystemService(Context.POWER_SERVICE);
-	    //нет нормальной альтернативы пока
-		wakeLock = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "Synchronization 7Fridays");
-	    wakeLock.acquire();
+		//pd = ProgressDialog.show(mActivity, "Working...", "request to server", true, false);		
+		//запрещаем засыпать во время синхронизации		  
+		if (mActivity!=null) {
+		    PowerManager pm = (PowerManager) mActivity.getSystemService(Context.POWER_SERVICE);
+		    //нет нормальной альтернативы пока
+			wakeLock = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "Synchronization 7Fridays");
+		    wakeLock.acquire();
+		}
 	    
 	      //Запускаем парсинг
 	      new ParseCategory().execute(strings[0],strings[1]);			
@@ -161,7 +174,7 @@ public class SynchronizationSite {
 			        	/*List<TagNode> childList = divElement.getChildTagList();
 			        	if (!childList.isEmpty()) {
 			        		String aa = childList.get(0).getAttributeByName("src").toString();
-			        		Log.d("MyLogs",aa);			        		
+			        				        		
 			        	}*/
 			        	
 			        	//elements - name, url,страна, категория
@@ -178,24 +191,18 @@ public class SynchronizationSite {
 		        	String urlShort=tekNomenklatura[1];
 		        	hh = new HtmlHelper(new URL(urlstring));
 		        	links = hh.getFullPageLinks();
-		        	//links.get(location);
-		        	/*TagNode[] foundList = divElement.getElementsByName("div", false);
-		        	for(TagNode tekitemlist:foundList) {			        	
-		        		Log.d("MyLogs",tekitemlist.toString());
-		        		Log.d("MyLogs",tekitemlist.getText().toString());
-		        	}		*/
-		        	//Log.d("MyLogs","urlstring="+urlstring);
+
 		        	if (links.size()==2) {
 		        		//линк на картинку
 		        		TagNode divElement = links.get(0);
 		        		String urlImg=arg[0]+divElement.getAttributeByName("src");
-		        		//Log.d("MyLogs","urlImg="+urlImg);
+		        		
 		        		
 		        		//описание номенклатуры
 		        		divElement = links.get(1);
+		        		        		
 		        		String descriptionNomenklatur=divElement.getText().toString();
-		        		descriptionNomenklatur=descriptionNomenklatur.replaceFirst("\\s+","");
-		        		//Log.d("MyLogs","opisanie="+descriptionNomenklatur);
+		        		//descriptionNomenklatur=descriptionNomenklatur.replaceFirst("\\s+","");		        		
 		        		
 		        		//url,description,imageurl
 		        		DBWork.updateNomenklaturaLongDescriptionAndImage(urlShort, descriptionNomenklatur,urlImg);
@@ -225,8 +232,13 @@ public class SynchronizationSite {
 		    //Событие по окончанию парсинга	    
 		    protected void onPostExecute(List<String> output) {
 		      //Убираем диалог загрузки
-		      pd.dismiss();
-		      wakeLock.release();
+		      //pd.dismiss();
+		      
+		    	writeSPref();
+		    	
+		    	if (wakeLock!=null) {
+		    		wakeLock.release();
+		    	}
 		      
 		      //Находим ListView
 		      
@@ -235,7 +247,16 @@ public class SynchronizationSite {
 		      listview.setAdapter(new ArrayAdapter<String>(mActivity,
 		          R.layout.mysimplelistitem , output));*/
 		      
-		      ((MainActivity)mActivity).forseload();
+		      if (null!=mActivity && !mActivity.isFinishing()) {	
+		    	  Toast.makeText(mActivity,"Обновление базы завершено.", Toast.LENGTH_LONG).show();
+		    	  ((MainActivity)mActivity).forseload();
+		      }
+		      
+		      if (null!=mService) {
+		    	  mService.echoIntent(MyReceiver.END_PARAM);
+		    	  mService.stopSelf();
+		    	  
+		      }
 		    }
 		    
 		    
@@ -277,6 +298,20 @@ public class SynchronizationSite {
 		    }
 		    
 		  }	  
+	  
+	  protected void writeSPref() {
+			
+		  Resources mRes;
+		  SharedPreferences prefs;
+		  if (mActivity!=null) {mRes=mActivity.getResources();prefs = mActivity.getSharedPreferences(mRes.getString(R.string.app_name),Context.MODE_PRIVATE);}
+		  if (mService!=null) {mRes = mService.getResources();prefs = mService.getSharedPreferences(mRes.getString(R.string.app_name),Context.MODE_PRIVATE);}
+		  else prefs=null; //exeption
+						           
+	        SharedPreferences.Editor editor = prefs.edit();
+	     
+	        editor.putLong("lastUpdate",System.currentTimeMillis());	       
+	        editor.commit();				
+	}
 
 
 }

@@ -1,7 +1,5 @@
 package seven.fridays.info;
 
-import org.apache.http.util.EntityUtils;
-
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -59,7 +57,6 @@ public class DBWork {
 	    if (updCount==0) {
 	    	db.insert("category", null, cv);		    	
 	    }
-	    db.close();
 	}
 
 	public static void updateCountry(String tekName, String tekUrl,String tekcategory) {
@@ -72,8 +69,7 @@ public class DBWork {
 	    int updCount = db.update("country", cv, "url = ?", new String[] { tekUrl });
 	    if (updCount==0) {
 	    	db.insert("country", null, cv);		    	
-	    }
-	    db.close();		
+	    }	
 	}
 	
 	public static void updateNomenklatura(String tekName, String tekUrl,String tekcountry,String tekcategory) {
@@ -87,8 +83,7 @@ public class DBWork {
 	    int updCount = db.update("nomenklatura", cv, "url = ?", new String[] { tekUrl });
 	    if (updCount==0) {
 	    	db.insert("nomenklatura", null, cv);		    	
-	    }
-	    db.close();		
+	    }	
 	}
 	
 	public static void updateNomenklaturaLongDescriptionAndImage(String tekUrl,String tekDescription,String tekImageUrl) {
@@ -101,8 +96,7 @@ public class DBWork {
 	    int updCount = db.update("nomenklatura", cv, "url = ?", new String[] { tekUrl });
 	    if (updCount==0) {
 	    	db.insert("nomenklatura", null, cv);		    	
-	    }
-	    db.close();		
+	    }	
 	}
 	
 	public static void updateImage(byte[] byteArray,String tekUrl) {
@@ -114,14 +108,13 @@ public class DBWork {
 	    int updCount = db.update("nomenklatura", cv, "url = ?", new String[] { tekUrl });
 	    if (updCount==0) {
 	    	db.insert("nomenklatura", null, cv);		    	
-	    }
-	    db.close();    		
+	    }	        	
 	}
 	
 	
 	// получить все данные из таблицы DB_TABLE
 	public static Cursor getAllData(ContentValues loaderParams) {
-		SQLiteDatabase db = MainActivity.DB_HELPER.getWritableDatabase();
+		SQLiteDatabase db = MainActivity.DB_HELPER.getReadableDatabase();
 		if (loaderParams != null) {
 			String querySelection = "";
 			String[] querySelectionArgs = new String[loaderParams.size()];
@@ -140,7 +133,15 @@ public class DBWork {
 				if (0==tekpoz) querySelection+=tekSelection; else querySelection+="AND "+tekSelection;
 				querySelectionArgs[tekpoz++] = loaderParams.getAsString("country");
 			}
+			
+			if (loaderParams.containsKey("url")) {
+				tekSelection = "url = ?";
+				if (0==tekpoz) querySelection+=tekSelection; else querySelection+="AND "+tekSelection;
+				querySelectionArgs[tekpoz++] = loaderParams.getAsString("url");
+			}			
 
+
+			
 			 return db.query("nomenklatura", null, querySelection,querySelectionArgs, null, null, null);
 		}
 
@@ -149,7 +150,7 @@ public class DBWork {
 	}
 	
 	public static Cursor getImageUrlData() {
-		SQLiteDatabase db = MainActivity.DB_HELPER.getWritableDatabase();
+		SQLiteDatabase db = MainActivity.DB_HELPER.getReadableDatabase();
 		return db.query("nomenklatura", new String[] {"imageurl","url"}, null, null, null, null, null);		
 	}
 	
@@ -208,6 +209,7 @@ public class DBWork {
 			DBWork.countryList=new String[] {""};
 		return countryList;
 	}
+	
 
 
 	

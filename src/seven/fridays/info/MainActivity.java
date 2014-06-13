@@ -3,15 +3,12 @@ package seven.fridays.info;
 
 import java.util.concurrent.TimeUnit;
 
-
-
-
-
-
-
 import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
@@ -20,8 +17,9 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
-import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -31,11 +29,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v4.widget.SimpleCursorAdapter;
 import android.widget.AdapterView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.TextView;
+import android.widget.Toast;
 
 public class MainActivity extends ActionBarActivity implements
 		NavigationDrawerFragment.NavigationDrawerCallbacks, LoaderCallbacks<Cursor> {
@@ -56,6 +53,11 @@ public class MainActivity extends ActionBarActivity implements
 	static MySimpleCursorAdapter scAdapter;
 	static ListView lvData;
 	static ContentValues loaderParams;	
+	public boolean isRun=false;
+	long lastUpdate; 
+	
+	MyReceiver br;
+	public final static String BROADCAST_ACTION = "sevenfridays.serviceresiver";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -77,7 +79,7 @@ public class MainActivity extends ActionBarActivity implements
 		//set background color for action bar
 		android.app.ActionBar bar = getActionBar();
 		//for color
-		bar.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#2e014f")));
+		bar.setBackgroundDrawable(new ColorDrawable(getResources().getColor(R.color.BASEFON)));
 		//for image
 		//bar.setBackgroundDrawable(getResources().getDrawable(R.drawable.ic_launcher));		
 
@@ -110,6 +112,14 @@ public class MainActivity extends ActionBarActivity implements
 	    
 	    //XXX создааем адаптер и настраиваем список
 	    scAdapter = new MySimpleCursorAdapter(this, R.layout.mysimplelistitem, null, from, to, 0);
+	    
+	    br=new MyReceiver();
+	    // создаем фильтр для BroadcastReceiver
+	    IntentFilter intFilt = new IntentFilter(BROADCAST_ACTION);
+	    // регистрируем (включаем) BroadcastReceiver
+	    registerReceiver(br, intFilt);
+	    
+	    readSPref();
 	}
 	
 	@Override
@@ -124,6 +134,17 @@ public class MainActivity extends ActionBarActivity implements
 	    // создаем лоадер для чтения данных
 	    getSupportLoaderManager().initLoader(0, null, this);	
 	    getSupportLoaderManager().getLoader(0).forceLoad();
+	    isRun=true;
+	    
+	   verifeUpdate();
+	}
+	
+
+	@Override
+	protected void onStop() {
+		// TODO Auto-generated method stub
+		isRun=false;
+		super.onStop();
 	}
 	
 
@@ -132,18 +153,20 @@ public class MainActivity extends ActionBarActivity implements
 		// update the main content by replacing fragments
 		FragmentManager fragmentManager = getSupportFragmentManager();
 		fragmentManager
-				.beginTransaction()
+				.beginTransaction() 
 				.replace(R.id.container,
 						PlaceholderFragment.newInstance(position + 1)).commit();
 		
 	}	
 
 	public void onSectionAttached(int number) {
+		// TODO !!! после пробуждения, здесь падаем, надо сохранять текущую секцию
 		Loader<Object> loader = getSupportLoaderManager().getLoader(0);
 		if (loader!=null) {
 			
 			if (!DBWork.categorySelected()) {
 				DBWork.selectCategory(number - 1);
+				mNavigationDrawerFragment.openNavigationDrawler();
 			} else {
 				if (number == 1) {
 					DBWork.unselectCategory();
@@ -243,13 +266,21 @@ public class MainActivity extends ActionBarActivity implements
 		    lvData.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            	
-            	Log.d("MyLogs","clickitem");
+            	          
             	View viewtextfull = view.findViewById(R.id.itemlayout);
             	
             	LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) viewtextfull.getLayoutParams();
             	params.height = LinearLayout.LayoutParams.WRAP_CONTENT;
-            	viewtextfull.setLayoutParams(params);            	            	
+            	viewtextfull.setLayoutParams(params);     
+            	
+            	//TODO start activity for result
+            	Cursor mCurs = (Cursor) parent.getItemAtPosition(position);
+            	int columnIndexUrl = mCurs.getColumnIndexOrThrow("url");
+            	String url = mCurs.getString(columnIndexUrl);     	
+	  	  	    Intent intent = new Intent(view.getContext(),NomenklaturaFullSize.class);
+	  	  	    intent.putExtra("url",url);
+	  	  	    startActivityForResult(intent,1);  
+            	
             }
         });
 			
@@ -270,6 +301,8 @@ public class MainActivity extends ActionBarActivity implements
 		
 		super.onDestroy();
 		DB_HELPER.close();
+		
+		unregisterReceiver(br);
 	}
 	
 	@Override
@@ -313,9 +346,49 @@ public class MainActivity extends ActionBarActivity implements
 	  }
 	
 	
-	public void forseload() {
+	public void forseload() {		
 		getSupportLoaderManager().getLoader(0).forceLoad();		
+	}		
+	
+	
+	protected void readSPref() {
+	    //Context con;
+      //  try {
+            SharedPreferences pref = getSharedPreferences(getString(R.string.app_name), Context.MODE_PRIVATE);
+            lastUpdate=pref.getLong("lastUpdate", 0);
+            Log.d("MyLogs", Long.toString(lastUpdate));
 	}
+	
+	
+	private void verifeUpdate() {
+		// TODO Auto-generated method stub
+		
+		readSPref();
+		// 86400000 - 1 день в мс, 172800000 - 2 дня 		
+		if (Math.abs(System.currentTimeMillis()-lastUpdate)>172800000l) { // need update
+			if (isDeviceOnline()) {
+				Toast.makeText(this, "Автоматически запущено обновление данных.", Toast.LENGTH_LONG).show();				
+				startService(new Intent(this, MyDBUpdateService.class));
+			} else {
+				Toast.makeText(this, "Данные устарели, доступ в интеренет отключен. Подключитесь к интернету для выполнения обновления.", Toast.LENGTH_LONG).show();				
+			}
+			
+		}
+		
+	}
+	
+	
+    /** Checks whether the device currently has a network connection */
+    private boolean isDeviceOnline() {
+        ConnectivityManager connMgr = (ConnectivityManager)
+                getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+        if (networkInfo != null && networkInfo.isConnected()) {
+            return true;
+        }
+        return false;
+    }
+
 	
 	
 	

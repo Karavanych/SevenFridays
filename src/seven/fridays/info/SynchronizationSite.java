@@ -23,6 +23,7 @@ import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
+import android.util.Log;
 import android.widget.Toast;
 
 
@@ -39,6 +40,8 @@ public class SynchronizationSite {
 	 public static long CHECK_SYNCHRONIZATION_TIME=3600000l; // 1 час
 	 
 	 static String NO_IMAGE_URL="http://37.98.243.100:88/img/no-image-big.png";
+	 
+	 protected float loadProgress=0;
 	
 	public SynchronizationSite(Activity cc) {
 		mActivity=cc;
@@ -111,6 +114,7 @@ public class SynchronizationSite {
 		    
 		     //  ..screen will stay on during this section..
 		    	
+		    	loadProgress=1;sendProgress(loadProgress);
 		    	   
 		      List<String[]> category = new ArrayList<String[]>();
 		      try
@@ -128,6 +132,8 @@ public class SynchronizationSite {
 		          DBWork.updateCategory(divElement.getText().toString(), divElement.getAttributeByName("href").toString());
 		          if (true==TEST_LOAD) break;
 		        }
+		        
+		        loadProgress=2;sendProgress(loadProgress);
 		        
 		        links.clear();// ссылки запомнены? можно их очистить, дальше опять будем использовать эту переменную
 		        
@@ -154,7 +160,7 @@ public class SynchronizationSite {
 			        }	
 			        links.clear();// ссылки запомнены? можно их очистить, дальше опять будем использовать эту переменную
 		        }
-		        
+		        loadProgress=5;sendProgress(loadProgress);
 		        //удаляем ссылки на категории, они больше не нужны
 		        category.clear();
 		        category=null;
@@ -164,6 +170,7 @@ public class SynchronizationSite {
 		        List<String[]> nomenklatura = new ArrayList<String[]>();
 		        		       
 		        //XXX парсим вложенные страницы, должны быть сами элементы номенклатуры, пока свернутые
+		        float progressIncrement=30f/country.size(); // 30% загрузки
 		        for(String[] tekCountry: country)	{
 		        	//country - страна,url,категория
 		        	String urlstring=arg[0]+tekCountry[1];
@@ -187,8 +194,11 @@ public class SynchronizationSite {
 			        	DBWork.updateNomenklatura(elementText, divElement.getAttributeByName("href").toString(),tekCountry[0],tekCountry[2]);			        	
 			        }
 			        links.clear(); //очищаяем ссылки на url
+			        loadProgress+=progressIncrement;sendProgress(loadProgress);
 		        }
-		        		        
+		        		 
+		         progressIncrement=30f/nomenklatura.size(); // 30% загрузки
+		         
 		        for (String[] tekNomenklatura: nomenklatura)	{
 		        	String urlstring=arg[0]+tekNomenklatura[1];
 		        	String urlShort=tekNomenklatura[1];
@@ -211,7 +221,7 @@ public class SynchronizationSite {
 		        		DBWork.updateNomenklaturaLongDescriptionAndImage(urlShort, descriptionNomenklatur,urlImg);
 		        		
 		        	}
-		        	
+		        	loadProgress+=progressIncrement;sendProgress(loadProgress);
 		        	//if (true==TEST_LOAD) break;
 		        
 		        }
@@ -269,6 +279,7 @@ public class SynchronizationSite {
 		    	int urlIndex = cur.getColumnIndex("url");
 		    	
 		    	cur.moveToFirst();
+		    	float progressIncrement=Math.abs(100-loadProgress)/cur.getCount();
 		    	while (cur.isAfterLast() == false) 
 		    	{
 		    		String tekUrl=cur.getString(urlIndex);
@@ -281,6 +292,7 @@ public class SynchronizationSite {
 						// TODO: handle exception
 					}		    		
 		    	    cur.moveToNext();
+		    	    loadProgress+=progressIncrement;sendProgress(loadProgress);
 		    	}		    	
 		    }
 		    
@@ -315,6 +327,12 @@ public class SynchronizationSite {
 	        editor.putLong("lastUpdate",System.currentTimeMillis());	       
 	        editor.commit();				
 	}
+	  
+	  protected void sendProgress(float prog) {
+		  if (null!=mService) {
+			  mService.echoIntent((int)prog);
+		  }
+	  }
 
 
 }

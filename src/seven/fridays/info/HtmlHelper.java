@@ -58,8 +58,7 @@ public class HtmlHelper {
 	      
 	      if (classType != null)
 	      {	    	  
-	        linkList.add(linkElements[i]);	
-	        Log.d("MyLogs", "scr="+classType);
+	        linkList.add(linkElements[i]);		       
 	      }
 	    }
 */

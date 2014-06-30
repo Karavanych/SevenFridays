@@ -284,8 +284,7 @@ public class SynchronizationSite {
 		    	{
 		    		String tekUrl=cur.getString(urlIndex);
 		    		String tekImageUrl=cur.getString(imageUrlIndex);
-		    		//Log.d("MyLogs", "url="+tekUrl);
-		    		//Log.d("MyLogs", "tekImageUrl="+tekImageUrl);
+		    		
 		    		try {
 		    			getImageFromUrl(tekUrl,tekImageUrl);
 					} catch (Exception e) {
@@ -305,8 +304,7 @@ public class SynchronizationSite {
 			    	  HttpEntity entity = mHttpResponse.getEntity();
 			    	    if ( entity != null) {
 			    	      // insert to database
-			    	    	DBWork.updateImage(EntityUtils.toByteArray(entity),tekUrl); 
-			    	    	//Log.d("MyLogs", "image "+tekImageUrl+" is loaded.");
+			    	    	DBWork.updateImage(EntityUtils.toByteArray(entity),tekUrl); 			    	    	
 			    	    }
 			    	}
 		    	}

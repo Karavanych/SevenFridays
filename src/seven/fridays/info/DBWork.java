@@ -3,6 +3,7 @@ package seven.fridays.info;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 public class DBWork {
 	
@@ -11,6 +12,15 @@ public class DBWork {
 	static int categoryListIndexSelect=NOT_SELECTED;
 	static String[] countryList;
 	static int countryListIndexSelect=NOT_SELECTED;
+	
+	
+	public static int getCategoryListIndexSelect() {
+		return categoryListIndexSelect;
+	}
+	
+	public static int getCountryListIndexSelect() {
+		return countryListIndexSelect;
+	}
 	
 	public static boolean categorySelected() {
 		if (categoryListIndexSelect==NOT_SELECTED) return false; else return true;
@@ -21,11 +31,11 @@ public class DBWork {
 	}
 	
 	public static void selectCategory(int tekcategory) {
-		categoryListIndexSelect=tekcategory;				
+		categoryListIndexSelect=tekcategory;		
 	}
 	
 	public static void selectCountry(int tekcountry) {
-		countryListIndexSelect=tekcountry;				
+		countryListIndexSelect=tekcountry;			
 	}	
 	
 	

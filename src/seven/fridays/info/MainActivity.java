@@ -22,7 +22,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -33,7 +32,6 @@ import android.support.v4.widget.DrawerLayout;
 import android.widget.AdapterView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.Toast;
 
 public class MainActivity extends ActionBarActivity implements
 		NavigationDrawerFragment.NavigationDrawerCallbacks, LoaderCallbacks<Cursor> {
@@ -63,12 +61,12 @@ public class MainActivity extends ActionBarActivity implements
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
+				
 		// do fullscreen app
 		this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
 				WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		
-		DB_HELPER = new DBHelper(this);
+		DB_HELPER = new DBHelper(this);				
 		
 		setContentView(R.layout.activity_main);
 
@@ -110,8 +108,7 @@ public class MainActivity extends ActionBarActivity implements
 		// формируем столбцы сопоставления
 	    String[] from = new String[] { "name","description" };
 	    int[] to = new int[] { R.id.itemtext1, R.id.itemtext2 };
-	    
-	    //XXX создааем адаптер и настраиваем список
+	    	    
 	    scAdapter = new MySimpleCursorAdapter(this, R.layout.mysimplelistitem, null, from, to, 0);
 	    
 	    br=new MyReceiver();
@@ -131,11 +128,21 @@ public class MainActivity extends ActionBarActivity implements
 	    am.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis()+ 1000 * 3,SynchronizationSite.CHECK_SYNCHRONIZATION_TIME , pi);
 	    
 	}
+		
 	
 	@Override
 	protected void onStart() {
 		
 		super.onStart();
+	/*	if (mNavigationDrawerFragment==null) {
+			mNavigationDrawerFragment = (NavigationDrawerFragment) getSupportFragmentManager()
+					.findFragmentById(R.id.navigation_drawer);
+			
+			// Set up the drawer.
+			mNavigationDrawerFragment.setUp(R.id.navigation_drawer,
+					(DrawerLayout) findViewById(R.id.drawer_layout));
+			
+		}*/
 	
 	    // добавляем контекстное меню к списку
 	    registerForContextMenu(lvData);
@@ -151,7 +158,7 @@ public class MainActivity extends ActionBarActivity implements
 
 	@Override
 	protected void onStop() {
-		// TODO Auto-generated method stub
+		
 		isRun=false;
 		super.onStop();
 	}
@@ -169,38 +176,46 @@ public class MainActivity extends ActionBarActivity implements
 	}	
 
 	public void onSectionAttached(int number) {
+		
+		
 		// TODO !!! после пробуждения, здесь падаем, надо сохранять текущую секцию
 		Loader<Object> loader = getSupportLoaderManager().getLoader(0);
 		if (loader!=null) {
 			
 			if (!DBWork.categorySelected()) {
 				DBWork.selectCategory(number - 1);
-				mNavigationDrawerFragment.openNavigationDrawler();
+				if (mNavigationDrawerFragment!=null) mNavigationDrawerFragment.openNavigationDrawler();
 			} else {
 				if (number == 1) {
 					DBWork.unselectCategory();
 					DBWork.unselectCountry();
-					mNavigationDrawerFragment.openNavigationDrawler();
+					if (mNavigationDrawerFragment!=null) mNavigationDrawerFragment.openNavigationDrawler();
 				} else {
 					DBWork.selectCountry(number - 2);
 				}
-			}		
+			}	
 			
-			mTitle = DBWork.getSelectedCategory()+"/"+DBWork.getSelectedCountry();								
-			// передаем параметры для фильтров
-			loaderParams = new ContentValues();
-			if (DBWork.categorySelected()) {
-				loaderParams.put("category", DBWork.getSelectedCategory());
-			}
+			setDbFilters(loader);
 			
-			if (DBWork.countrySelected()) {
-				loaderParams.put("country", DBWork.getSelectedCountry());
-			}
-			
-			loader.forceLoad();
+
 		} else {
 			mTitle = getString(R.string.app_name);
 		}
+	}
+	
+	public void setDbFilters(Loader<Object> loader) {
+		mTitle = DBWork.getSelectedCategory()+"/"+DBWork.getSelectedCountry();								
+		// передаем параметры для фильтров
+		loaderParams = new ContentValues();
+		if (DBWork.categorySelected()) {
+			loaderParams.put("category", DBWork.getSelectedCategory());
+		}
+		
+		if (DBWork.countrySelected()) {
+			loaderParams.put("country", DBWork.getSelectedCountry());
+		}
+		
+		loader.forceLoad();		
 	}
 
 	public void restoreActionBar() {
@@ -281,8 +296,7 @@ public class MainActivity extends ActionBarActivity implements
             	LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) viewtextfull.getLayoutParams();
             	params.height = LinearLayout.LayoutParams.WRAP_CONTENT;
             	viewtextfull.setLayoutParams(params);     
-            	
-            	//TODO start activity for result
+            	          
             	Cursor mCurs = (Cursor) parent.getItemAtPosition(position);
             	int columnIndexUrl = mCurs.getColumnIndexOrThrow("url");
             	String url = mCurs.getString(columnIndexUrl);     	
@@ -299,8 +313,10 @@ public class MainActivity extends ActionBarActivity implements
 		@Override
 		public void onAttach(Activity activity) {
 			super.onAttach(activity);
-			((MainActivity) activity).onSectionAttached(getArguments().getInt(
-					ARG_SECTION_NUMBER));
+			
+				((MainActivity) activity).onSectionAttached(getArguments().getInt(
+						ARG_SECTION_NUMBER));
+			
 		}		
 		
 	}
@@ -363,14 +379,13 @@ public class MainActivity extends ActionBarActivity implements
 	    //Context con;
       //  try {
             SharedPreferences pref = getSharedPreferences(getString(R.string.app_name), Context.MODE_PRIVATE);
-            lastUpdate=pref.getLong("lastUpdate", 0);
-            Log.d("MyLogs", Long.toString(lastUpdate));
+            lastUpdate=pref.getLong("lastUpdate", 0);           
 	}*/
 	
 	
 	//проверку обновлений сделали через AlarmReceiver
 	/*private void verifeUpdate() {
-		// TODO Auto-generated method stub
+		
 		
 		readSPref();
 			
@@ -397,7 +412,30 @@ public class MainActivity extends ActionBarActivity implements
         }
         return false;
     }
-
+    
+    
+	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+		// TODO Auto-generated method stub
+		super.onSaveInstanceState(outState);
+		outState.putInt("categoryListIndexSelect",DBWork.getCategoryListIndexSelect());
+		outState.putInt("countryListIndexSelect",DBWork.getCountryListIndexSelect());
+	}
+	
+	@Override
+	protected void onRestoreInstanceState(Bundle savedInstanceState) {
+		// TODO Auto-generated method stub
+		super.onRestoreInstanceState(savedInstanceState);
+		DBWork.selectCategory(savedInstanceState.getInt("categoryListIndexSelect"));
+		DBWork.selectCountry(savedInstanceState.getInt("countryListIndexSelect"));		
+		
+		Loader<Object> loader = getSupportLoaderManager().getLoader(0);
+		if (loader!=null) {
+			setDbFilters(loader);
+		}
+		
+		//restoreActionBar();
+	}
 	
 	
 	

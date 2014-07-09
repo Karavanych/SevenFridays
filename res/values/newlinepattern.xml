@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>  
+    <string-array
+        name="newlinepattern">
+        <item>В чем уникальность продукта:</item>
+        <item>Из каких материалов производится:</item>
+        <item>Цвет:</item>
+        <item>Аромат:</item>
+        <item>Вкус:</item>
+        <item>Послевкусие:</item>
+        <item>Подача:</item>
+        <item>Сочетания:</item>
+        <item>Технология производства:</item>
+        <item>Факты о торговой марке:</item>
+        <item>Факты о производителе:</item>
+    </string-array>   
+</resources>
